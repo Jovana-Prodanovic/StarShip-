@@ -89,6 +89,65 @@ public class SpaceStation : BaseEntity
         Logbook.Add(LogType.Fuel, $"{ship.Name} geladen mit {needed}, Pool {FuelPool}");
     }
 
+    public void AssignCrew(BaseShip ship)
+    {
+        ArgumentNullException.ThrowIfNull(ship);
+        Rules.Require(_dockedShips.Contains(ship), "Schiff ist hier nicht angedockt.");
+
+        var missingRoles = ship.MissingRoles();
+        List<CrewMember> toAssign = new();
+
+        foreach (var role in missingRoles)
+        {
+            int neededCount = ship.RequiredRoles[role] - ship.Crew.Count(c => c.Role == role);
+            var availableMembers = _crewPool.Where(c => c.Role == role).Take(neededCount).ToList();
+            
+            Rules.Require(availableMembers.Count == neededCount, $"Nicht genügend Personal für Rolle {role} im Pool.");
+            toAssign.AddRange(availableMembers);
+        }
+
+        int totalSpacesNeeded = toAssign.Count;
+        Rules.Require(ship.CrewCount + totalSpacesNeeded <= BaseShip.MaxCrew, "Nicht genügend Sitze auf dem Schiff.");
+
+        foreach (var member in toAssign)
+        {
+            _crewPool.Remove(member);
+            ship.Board(member);
+        }
+
+        Logbook.Add(LogType.Crew, $"{totalSpacesNeeded} Personen an {ship.Name} zugeteilt");
+    }
+
+    public void UnassignCrew(BaseShip ship)
+    {
+        ArgumentNullException.ThrowIfNull(ship);
+        Rules.Require(_dockedShips.Contains(ship), "Schiff ist hier nicht angedockt.");
+
+        int count = ship.Crew.Count;
+        var membersToUnboard = ship.Crew.ToList();
+
+        foreach (var member in membersToUnboard)
+        {
+            ship.Unboard(member);
+            _crewPool.Add(member);
+        }
+
+        Logbook.Add(LogType.Crew, $"{count} Personen von {ship.Name} zurück im Pool");
+    }
+
+    // --- Report ---
+    public string Report()
+    {
+        string dockedNames = _dockedShips.Any() ? string.Join(", ", _dockedShips.Select(s => s.Name)) : "-";
+        string crewNames = _crewPool.Any() ? string.Join(", ", _crewPool) : "-";
+
+        return $"{Name} ({GetType().Name})\n" +
+               $"  Position    {Position} Lichtjahre\n" +
+               $"  Fuel Pool   {FuelPool}\n" +
+               $"  Docks       {_dockedShips.Count}/{MaxDocks}: {dockedNames}\n" +
+               $"  Crew Pool   {_crewPool.Count}: {crewNames}";
+    }
+
     // --- Queries ---
     public int ShipCount => _dockedShips.Count;
 

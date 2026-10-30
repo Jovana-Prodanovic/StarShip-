@@ -15,7 +15,7 @@ public class SpaceStationTests
         var ship = new CargoShip("USS-Enterprise", new Coordinate(0, 0), 100);
 
        
-        station.DockShip(ship);
+        station.Dock(ship);
 
        
         Assert.Contains(ship, station.DockedShips);

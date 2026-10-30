@@ -5,7 +5,7 @@ using StarShip.Domain.Logbooks;
 public class BaseEntity
 {
     public Guid Id { get; } = Guid.NewGuid();
-    public DateOnly BuiltAt { get; } = DateOnly.FromDateTime(DateTime.Now);
+    public DateOnly BuiltAt { get; init; } = DateOnly.FromDateTime(DateTime.Now);
     public Logbook Logbook { get; }
     public string Name { get; }
     public Coordinate Position { get; set; }
@@ -19,4 +19,19 @@ public class BaseEntity
         Position = position?? throw new ArgumentNullException(nameof(position));
         Logbook = new Logbook(this);
     }
+
+    public override string ToString() => Name;
+
+    public double DistanceTo(Coordinate target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        return Position.DistanceTo(target);
+    }
+
+    public double DistanceTo(BaseEntity other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        return Position.DistanceTo(other.Position);
+    }
+
 }

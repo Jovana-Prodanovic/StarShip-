@@ -1,6 +1,6 @@
 ﻿namespace StarShip.Domain.Models.Ships;
 
-using System.Linq; // LINQ metode (.All, .Where, .Select, .ToHashSet)
+using System.Linq;
 using System.Collections.Generic;
 using StarShip.Domain.Models.Entities;
 using StarShip.Domain.Models.Shared;
@@ -16,7 +16,7 @@ public abstract class BaseShip : BaseEntity
     public const int FuelPerWarp = 1;
 
     public IReadOnlyDictionary<CrewRole, int> RequiredRoles { get; }
-    public int Fuel { get; protected set; } = MaxFuel;
+    public int Fuel { get; protected set; } = 0;
     public DistressSignal? Distress { get; set; }
     public SpaceStation? Station { get; set; }
 
@@ -68,6 +68,91 @@ public abstract class BaseShip : BaseEntity
         Logbook.Add(LogType.Fuel, $"{amount} Antimaterie geladen, Antimaterie {Fuel}/{MaxFuel}");
     }
 
+    public void Board(CrewMember member)
+    {
+        ArgumentNullException.ThrowIfNull(member);
+        Rules.Require(_crew.Count < MaxCrew, "Schiff ist voll.");
+        Rules.Require(!_crew.Contains(member), "Person ist bereits an Bord.");
+
+        _crew.Add(member);
+        Logbook.Add(LogType.Crew, $"{member} an Bord");
+    }
+
+    public void Unboard(CrewMember member)
+    {
+        ArgumentNullException.ThrowIfNull(member);
+        Rules.Require(_crew.Contains(member), "Person ist nicht an Bord.");
+
+        _crew.Remove(member);
+        Logbook.Add(LogType.Crew, $"{member} von Bord");
+    }
+
+    public void Launch()
+    {
+        Rules.Require(IsDocked, "Schiff ist nicht angedockt.");
+        Rules.Require(HasRequiredRoles, $"Besatzung unvollständig: {string.Join(", ", MissingRoles())}");
+        Rules.Require(Fuel == MaxFuel, "Warpkern ist nicht voll.");
+
+        var station = Station ?? throw new InvalidOperationException("Schiff ist an keiner Station.");
+        station.Undock(this);
+    }
+
+    public bool HasEnoughFuelTo(Coordinate target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        double distance = Position.DistanceTo(target);
+        int jumpsNeeded = (int)Math.Ceiling(distance / WarpRange);
+        return Fuel >= jumpsNeeded * FuelPerWarp;
+    }
+
+    public bool CanWarpTo(Coordinate target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        return Status == ShipStatus.InSpace && HasRequiredRoles && HasEnoughFuelTo(target);
+    }
+
+    public bool CanWarpTo(SpaceStation station)
+    {
+        ArgumentNullException.ThrowIfNull(station);
+        return CanWarpTo(station.Position);
+    }
+
+    public void WarpTo(Coordinate target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        Rules.Require(CanWarpTo(target), "Warp-Bedingungen nicht erfüllt.");
+
+        double distance = Position.DistanceTo(target);
+        Coordinate newPosition;
+
+        if (distance <= WarpRange)
+        {
+            newPosition = target;
+        }
+        else
+        {
+            double ratio = WarpRange / distance;
+            int newX = (int)Math.Round(Position.X + (target.X - Position.X) * ratio);
+            int newY = (int)Math.Round(Position.Y + (target.Y - Position.Y) * ratio);
+            newPosition = new Coordinate(newX, newY);
+        }
+
+        Position = newPosition;
+        Fuel -= FuelPerWarp;
+
+        Logbook.Add(LogType.Warp, $"Warp-Sprung nach {Position}, Antimaterie {Fuel}/{MaxFuel}");
+    }
+
+    public void WarpTo(SpaceStation station)
+    {
+        ArgumentNullException.ThrowIfNull(station);
+        WarpTo(station.Position);
+        if (Position.Equals(station.Position))
+        {
+            station.Dock(this);
+        }
+    }
+
     // --- Queries ---
     public bool HasRequiredRoles => RequiredRoles.All(r => _crew.Count(c => c.Role == r.Key) >= r.Value);
 
@@ -90,4 +175,15 @@ public abstract class BaseShip : BaseEntity
         { Fuel: < MaxFuel } => Readiness.NeedsFuel,
         _ => Readiness.Ready
     };
+    
+    public virtual string Report()
+    {
+        string crewNames = Crew.Any() ? string.Join(", ", Crew) : "-";
+        return $"{Name} ({GetType().Name})\n" +
+               $"  Status      {Status}\n" +
+               $"  Readiness   {Readiness}\n" +
+               $"  Position    {Position} Lichtjahre\n" +
+               $"  Fuel        {Fuel}/{MaxFuel}\n" +
+               $"  Crew        {Crew.Count}/{MaxCrew}: {crewNames}";
+    }
 }

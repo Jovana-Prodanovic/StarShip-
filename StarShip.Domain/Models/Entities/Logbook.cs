@@ -24,6 +24,10 @@ public class Logbook
     {
         _entries.Add(new LogEntry(DateTime.Now, type, actor, message));
     }
+    public void Add(LogType type, string message)
+    {
+        _entries.Add(new LogEntry(DateTime.Now, type, Owner.Name, message));
+    }
 
     public IReadOnlyList<LogEntry> ByType(LogType type)
     {
@@ -35,8 +39,8 @@ public class Logbook
         return _entries.LastOrDefault(e => e.Type == type);
     }
 
-    public void Add(LogType crew, string s)
+    public override string ToString()
     {
-        throw new NotImplementedException();
+        return $"Logbook for {Owner.Name} with {Count} entries.";
     }
 }
