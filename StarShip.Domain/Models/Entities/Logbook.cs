@@ -34,4 +34,9 @@ public class Logbook
     {
         return _entries.LastOrDefault(e => e.Type == type);
     }
+
+    public void Add(LogType crew, string s)
+    {
+        throw new NotImplementedException();
+    }
 }

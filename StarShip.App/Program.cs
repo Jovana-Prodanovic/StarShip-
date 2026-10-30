@@ -1,24 +1,22 @@
-using StarShip.Domain.Models;
-
 namespace StarShip.App;
 
+using StarShip.Domain.Enums;
+using StarShip.Domain.Models.Shared;
+using StarShip.Domain.Models.Stations; 
 class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("=== STARSHIP SYSTEM INITIALIZATION ===");
+        Console.WriteLine("=== STARSHIP SYSTEM START ===");
 
-        var myShip = new Spaceship("USS-2026", "Enterprise-Prodanovic");
-        Console.WriteLine($"Schiff erfolgreich erstellt: {myShip.Name} (ID: {myShip.Id})");
-        Console.WriteLine($"Aktueller Status: {myShip.Status}, Treibstoff: {myShip.FuelLevel}%");
+        
+        var station = new SpaceStation("Alpha Station", new Coordinate(0, 0), 1000);
+        Console.WriteLine($"Stanica uspešno kreirana: {station.Name}");
 
-        var pilot = new CrewMember("Jovana", "Captain");
-        myShip.AddCrewMember(pilot);
-        Console.WriteLine($"Besatzungsmitglied hinzugefügt: {pilot.Name} als {pilot.Role}");
+        var pilot = new CrewMember("Jovana", CrewRole.Captain);
+        station.AddCrew(pilot); 
+        Console.WriteLine($"Besatzungsmitglied hinzugefügt: {pilot.Name}");
 
-        myShip.Refuel(20);
-        Console.WriteLine($"Treibstoffstand nach der Aktion: {myShip.FuelLevel}%");
-
-        Console.WriteLine("=== SYSTEM IST BEREIT FÜR DIE PRÄSENTATION ===");
+        Console.WriteLine("=== SYSTEM IST BEREIT ===");
     }
 }

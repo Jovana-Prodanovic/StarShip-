@@ -1,21 +1,24 @@
-﻿using StarShip.Domain.Enums;
-using StarShip.Domain.Models;
-using Xunit;
+﻿using Xunit;
+using StarShip.Domain.Models.Shared;
+using StarShip.Domain.Models.Ships;
+using StarShip.Domain.Models.Stations;
 
 namespace StarShip.Tests;
 
-public class SpaceshipTests
+public class SpaceStationTests
 {
-    public void Constructor_ShouldInitializeCorrectly()
+    [Fact]
+    public void DockShip_ShouldAddShipToDockedList()
     {
-        // Arrange & Act
-        var ship = new Spaceship("USS-1", "Enterprise");
+        
+        var station = new SpaceStation("Alpha Station", new Coordinate(0, 0), 1000);
+        var ship = new CargoShip("USS-Enterprise", new Coordinate(0, 0), 100);
 
-        // Assert
-        Assert.Equal("USS-1", ship.Id);
-        Assert.Equal("Enterprise", ship.Name);
-        Assert.Equal(ShipStatus.Ready, ship.Status);
-        Assert.Equal(100, ship.FuelLevel);
-        Assert.Empty(ship.Crew);
+       
+        station.DockShip(ship);
+
+       
+        Assert.Contains(ship, station.DockedShips);
+        Assert.Equal(station, ship.Station);
     }
 }
