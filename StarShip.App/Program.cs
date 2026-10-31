@@ -2,18 +2,12 @@ namespace StarShip.App;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using StarShip.Domain.Models.Ships;
 using StarShip.Domain.Models.Shared;
 using StarShip.Domain.Enums;
-using StarShip.Domain.Queries; 
+using StarShip.Domain.Models.Queries; 
 using StarShip.Domain.Models.Stations;
-
-using System;
-using System.Collections.Generic;
-using StarShip.Domain.Models.Ships;
-using StarShip.Domain.Models.Shared;
-using StarShip.Domain.Enums;
-using StarShip.Domain.Queries; 
 
 class Program
 {
@@ -62,6 +56,37 @@ class Program
         {
             Console.WriteLine($"Schiffstyp: {fuelInfo.Type}, Treibstoff: {fuelInfo.Fuel}");
         }
+
+        // ------ AKT 3 ------
+        Console.WriteLine();
+        Console.WriteLine("=== AKT 3: Notruf ===");
+
+        xhosa.Board(CrewMember.Captain("Sisko"));
+        xhosa.Board(CrewMember.Pilot("Paris"));
+
+        var target = new Coordinate(145, 200);
+        xhosa.Launch();
+        xhosa.WarpTo(target);
+        xhosa.SendDistressSignal("Warpkern überhitzt");
+
+        Console.WriteLine($"Schiff in Not: {fleet.AnyInDistress()}");
+        Console.WriteLine($"In Not: {string.Join(", ", fleet.InDistress().Select(s => s.Name))}");
+        Console.WriteLine($"Nächstes Schiff zur Station: {fleet.Nearest(home)?.Name}");
+        Console.WriteLine($"Notrufe: {string.Join(", ", fleet.DistressReports())}");
+
+        Console.WriteLine("Lagebericht:");
+        foreach (var ship in fleet)
+            Console.WriteLine($"  {Describe(ship)}");
     }
+
+    static string Describe(BaseShip ship) => ship switch
+    {
+        CargoShip { Status: ShipStatus.Distress } c => $"{c.Name}: Frachter 80 % beladen, NOTRUF",
+        CargoShip { IsFull: true } c => $"{c.Name}: Frachter voll beladen, Docked, NeedsCrew",
+        CargoShip c => $"{c.Name}: Frachter 80 % beladen, Docked, NeedsCrew",
+        RescueShip { Readiness: Readiness.Ready } r => $"{r.Name}: Rettungsschiff startklar, Docked",
+        RescueShip r => $"{r.Name}: Rettungsschiff, Docked, NeedsCrew",
+        _ => ship.ToString()
+    };
 }
 

@@ -1,10 +1,12 @@
-﻿namespace StarShip.Domain.Queries;
+﻿using System.Runtime.InteropServices.JavaScript;
+
+namespace StarShip.Domain.Models.Queries;
 
 using System.Collections.Generic;
 using System.Linq;
 using StarShip.Domain.Models.Ships;
 using StarShip.Domain.Enums;
-
+using StarShip.Domain.Models.Shared;
 public record FuelByType(string Type, int Fuel);
 
 public static class ShipQueries
@@ -38,4 +40,44 @@ public static class ShipQueries
             .Select(g => new FuelByType(g.Key, g.Sum(s => s.Fuel)))
             .OrderBy(g => g.Type)
             .ToList();
+
+
+    public static bool AnyInDistress(this IEnumerable<BaseShip> ships)
+    {
+        ArgumentNullException.ThrowIfNull(ships);
+        return ships.Any(s => s.Status == ShipStatus.Distress);
+    }
+
+    public static IReadOnlyList<BaseShip> InDistress(this IEnumerable<BaseShip> ships)
+    {
+        ArgumentNullException.ThrowIfNull(ships);
+        return ships.Where(s => s.Status == ShipStatus.Distress).ToList();
+    }
+
+    public static BaseShip? Nearest(this IEnumerable<BaseShip> ships, Coordinate origin)
+    {
+        ArgumentNullException.ThrowIfNull(ships);
+        ArgumentNullException.ThrowIfNull(origin);
+
+        return ships.Any() ? ships.MinBy(s => s.Position.DistanceTo(origin)) : null;
+    }
+
+    public static BaseShip? Farthest(this IEnumerable<BaseShip> ships, Coordinate origin)
+    {
+        ArgumentNullException.ThrowIfNull(ships);
+        ArgumentNullException.ThrowIfNull(origin);
+
+        return ships.Any() ? ships.MaxBy(s => s.Position.DistanceTo(origin)) : null;
+    }
+
+    public static IReadOnlyList<DistressReport> DistressReports(this IEnumerable<BaseShip> ships)
+    {
+        ArgumentNullException.ThrowIfNull(ships);
+        
+        return ships
+            .Where(s => s.Distress != null)
+            .OrderBy(s => s.Distress!.SentAt)
+            .Select(s => new DistressReport(s.Name, s.Distress!.Reason, s.Distress!.SentAt))
+            .ToList();
+    }
 }

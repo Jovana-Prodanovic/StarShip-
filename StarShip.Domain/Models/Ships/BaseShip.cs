@@ -14,13 +14,14 @@ public abstract class BaseShip : BaseEntity
     public const int WarpRange = 15;
     public const int SensorRange = 20;
     public const int FuelPerWarp = 1;
+    
+    private readonly List<CrewMember> _crew = [];
 
     public IReadOnlyDictionary<CrewRole, int> RequiredRoles { get; }
     public int Fuel { get; protected set; } = 0;
-    public DistressSignal? Distress { get; set; }
+    public DistressSignal? Distress { get; protected set; }
     public SpaceStation? Station { get; set; }
-
-    private readonly List<CrewMember> _crew = new();
+    
     public IReadOnlyList<CrewMember> Crew => _crew.AsReadOnly();
 
     public int CrewCount => _crew.Count;
@@ -185,5 +186,11 @@ public abstract class BaseShip : BaseEntity
                $"  Position    {Position} Lichtjahre\n" +
                $"  Fuel        {Fuel}/{MaxFuel}\n" +
                $"  Crew        {Crew.Count}/{MaxCrew}: {crewNames}";
+    }
+
+    public void SendDistressSignal(string reason)
+    {
+        Distress = new DistressSignal(reason, DateTime.Now);
+        
     }
 }
