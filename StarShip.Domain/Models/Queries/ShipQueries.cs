@@ -80,4 +80,13 @@ public static class ShipQueries
             .Select(s => new DistressReport(s.Name, s.Distress!.Reason, s.Distress!.SentAt))
             .ToList();
     }
+
+    public static IReadOnlyList<BaseShip> WithinRange(this IEnumerable<BaseShip> ships, Coordinate origin, int range)
+    {
+        ArgumentNullException.ThrowIfNull(ships);
+        ArgumentNullException.ThrowIfNull(origin);
+
+        return ships.Where(s => s.Position.DistanceTo(origin) <= range).OrderBy(s => s.Position.DistanceTo(origin))
+            .ToList();
+    }
 }

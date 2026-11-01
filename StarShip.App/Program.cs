@@ -8,6 +8,7 @@ using StarShip.Domain.Models.Shared;
 using StarShip.Domain.Enums;
 using StarShip.Domain.Models.Queries; 
 using StarShip.Domain.Models.Stations;
+using StarShip.Domain.Models.Entities;
 
 class Program
 {
@@ -77,6 +78,42 @@ class Program
         Console.WriteLine("Lagebericht:");
         foreach (var ship in fleet)
             Console.WriteLine($"  {Describe(ship)}");
+
+        
+        Console.WriteLine();
+        Console.WriteLine("=== AKT 4: Rio Grande fliegt ===");
+
+        var rioGrandeRescue = new RescueShip("Rio Grande Rescue", new Coordinate(0, 0));
+
+        
+        var distressedShip1 = new CargoShip("Titan", new Coordinate(10, 5), 100);
+        distressedShip1.SendDistressSignal("Engine failure");
+
+        var distressedShip2 = new CargoShip("Nomad", new Coordinate(15, -5), 80);
+        distressedShip2.SendDistressSignal("Hull breach");
+
+        var allShips = new List<BaseShip> { rioGrandeRescue, distressedShip1, distressedShip2 };
+
+        Console.WriteLine("--- STARTING SCAN ---");
+        var foundShips = rioGrandeRescue.Scan(allShips);
+
+        foreach (var ship in foundShips)
+        {
+            Console.WriteLine($"Found ship in distress: {ship.Name}");
+        
+            
+            if (rioGrandeRescue.CanRescue(ship, ds9))
+            {
+                rioGrandeRescue.Rescue(ship, ds9);
+                Console.WriteLine($"Successfully rescued: {ship.Name}");
+            }
+        }
+
+        Console.WriteLine("\n--- LOGBOOK ANALYSIS ---");
+        foreach (var summary in rioGrandeRescue.Logbook.CountByType())
+        {
+            Console.WriteLine(summary);
+        }
     }
 
     static string Describe(BaseShip ship) => ship switch
@@ -89,4 +126,3 @@ class Program
         _ => ship.ToString()
     };
 }
-

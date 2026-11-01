@@ -1,4 +1,6 @@
-﻿namespace StarShip.Domain.Models.Ships;
+﻿using StarShip.Domain.Models.Queries;
+
+namespace StarShip.Domain.Models.Ships;
 
 using System.Linq;
 using System.Collections.Generic;
@@ -192,5 +194,20 @@ public abstract class BaseShip : BaseEntity
     {
         Distress = new DistressSignal(reason, DateTime.Now);
         
+    }
+
+    public bool IsInSensorRange(BaseShip other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        return Position.DistanceTo(other.Position) <= SensorRange;
+    }
+
+    public virtual IEnumerable<BaseShip> Scan(IEnumerable<BaseShip> ships)
+    {
+        ArgumentNullException.ThrowIfNull(ships);
+    
+        return ships
+            .Where(s => s != this && IsInSensorRange(s))
+            .WithinRange(Position, SensorRange);
     }
 }

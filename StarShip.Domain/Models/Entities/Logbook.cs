@@ -1,5 +1,10 @@
-﻿namespace StarShip.Domain.Logbooks;
+﻿using StarShip.Domain.Models;
 
+namespace StarShip.Domain.Logbooks;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using StarShip.Domain.Models.Entities;
 using StarShip.Domain.Models.Shared;
 using StarShip.Domain.Enums;
@@ -24,6 +29,7 @@ public class Logbook
     {
         _entries.Add(new LogEntry(DateTime.Now, type, actor, message));
     }
+    
     public void Add(LogType type, string message)
     {
         _entries.Add(new LogEntry(DateTime.Now, type, Owner.Name, message));
@@ -42,5 +48,30 @@ public class Logbook
     public override string ToString()
     {
         return $"Logbook for {Owner.Name} with {Count} entries.";
+    }
+
+    public void Append(Logbook other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        Rules.Require(other != this, "Ein Logbuck kann nicht an sich selbest angehängt werden");
+
+        foreach (var entry in other.Entries)
+        {
+            _entries.Add(entry);
+        }
+    }
+
+    public record LogTypeCount(LogType Type, int Count)
+    {
+        public override string ToString() => $"{Type}: {Count}";
+    }
+
+    public IReadOnlyList<LogTypeCount> CountByType()
+    {
+        return _entries
+            .GroupBy(e => e.Type)
+            .Select(g => new LogTypeCount(g.Key, g.Count()))
+            .OrderByDescending(x => x.Count)
+            .ToList();
     }
 }
