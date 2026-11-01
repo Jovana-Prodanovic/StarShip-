@@ -74,4 +74,15 @@ public class Logbook
             .OrderByDescending(x => x.Count)
             .ToList();
     }
+
+    public string Format(LogEntry entry)
+    {
+        string label = entry.Type == LogType.Distress ? "[!!]" : $"[{entry.Type}]";
+        return $"{label,-10}{entry.Actor,-12}{entry.Message}";
+    }
+
+    public string Report()
+    {
+        return string.Join(Environment.NewLine, Entries.Select(Format));
+    }
 }

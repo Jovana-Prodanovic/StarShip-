@@ -1,13 +1,13 @@
-﻿using StarShip.Domain.Models.Queries;
+﻿namespace StarShip.Domain.Models.Ships;
 
-namespace StarShip.Domain.Models.Ships;
-
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using StarShip.Domain.Models.Entities;
 using StarShip.Domain.Models.Shared;
 using StarShip.Domain.Enums;
 using StarShip.Domain.Models.Stations;
+using StarShip.Domain.Models.Queries;
 
 public abstract class BaseShip : BaseEntity
 {
@@ -88,6 +88,29 @@ public abstract class BaseShip : BaseEntity
 
         _crew.Remove(member);
         Logbook.Add(LogType.Crew, $"{member} von Bord");
+    }
+
+    public void UnassignCrew()
+    {
+        var station = Station
+                      ?? throw new InvalidOperationException(
+                          "Die Besatzung kann nur an einer Station abgemustert werden.");
+
+        int count = _crew.Count;
+
+        foreach (var member in _crew)
+        {
+            if (!station.CrewPool.Contains(member))
+            {
+                station.AddCrew(member);
+            }
+        }
+
+        _crew.Clear();
+
+        Logbook.Add(
+            LogType.Crew,
+            $"{count} Crewmitglieder an {station.Name} zurückgegeben.");
     }
 
     public void Launch()
@@ -193,7 +216,6 @@ public abstract class BaseShip : BaseEntity
     public void SendDistressSignal(string reason)
     {
         Distress = new DistressSignal(reason, DateTime.Now);
-        
     }
 
     public bool IsInSensorRange(BaseShip other)

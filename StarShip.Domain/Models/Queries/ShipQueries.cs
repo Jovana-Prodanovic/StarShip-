@@ -1,12 +1,11 @@
-﻿using System.Runtime.InteropServices.JavaScript;
-
-namespace StarShip.Domain.Models.Queries;
-
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarShip.Domain.Models.Ships;
 using StarShip.Domain.Enums;
 using StarShip.Domain.Models.Shared;
+
+namespace StarShip.Domain.Models.Queries;
 public record FuelByType(string Type, int Fuel);
 
 public static class ShipQueries
@@ -89,4 +88,21 @@ public static class ShipQueries
         return ships.Where(s => s.Position.DistanceTo(origin) <= range).OrderBy(s => s.Position.DistanceTo(origin))
             .ToList();
     }
-}
+
+    public record YearCount(int Year, int Count)
+    {
+        public override string ToString() => $"{Year}: {Count}";
+        
+    }
+    
+        public static BaseShip? Oldest(this IEnumerable<BaseShip> ships) => ships.MinBy(s => s.BuiltAt);
+        public static BaseShip? Newest(this IEnumerable<BaseShip> ships) => ships.MaxBy(s => s.BuiltAt);
+
+        public static BaseShip? WithLargestCrew(this IEnumerable<BaseShip> ships) => ships.MaxBy(s => s.CrewCount);
+
+        public static IReadOnlyList<YearCount> PerBuildYear(this IEnumerable<BaseShip> ships) => ships
+            .GroupBy(s => s.BuiltAt.Year)
+            .Select(g => new YearCount(g.Key, g.Count()))
+            .OrderBy(yc => yc.Year)
+            .ToList();
+    }
